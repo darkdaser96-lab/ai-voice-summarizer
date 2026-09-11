@@ -1,2 +1,22 @@
-# ai-voice-summarizer
-Simple web app: paste text, get LLM summary. Built for quick entry into AI/info sphere.
+# AI Summarizer
+
+Простое веб-приложение: вставил текст — получил краткое резюме через OpenAI или Anthropic.
+
+## Как запустить
+
+1. Открой `index.html` в браузере.
+2. Вставь API ключ (OpenAI `sk-...` или Anthropic `sk-ant-...`).
+3. Вставь текст и нажми "Сократить".
+
+Ключ хранится только в браузере, никуда не отправляется.
+
+## Стек
+
+- Чистый HTML/CSS/JS, без сборки.
+- Вызывает API нейросетей прямо из браузера.
+
+## Дальше
+
+- Добавить распознавание голоса (через Whisper).
+- Вынести ключ в serverless function, чтобы скрыть от пользователя.
+- Сделать Telegram-бота на той же логике.
