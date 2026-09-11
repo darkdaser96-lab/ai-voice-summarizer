@@ -75,13 +75,17 @@
       margin-top: 14px;
       flex-wrap: wrap;
     }
-    select, input[type=password] {
+    select, input[type=password], input[type=file] {
       background: #0d0f14;
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 10px;
       padding: 10px 12px;
       font-size: 14px;
+    }
+    input[type=file] {
+      flex: 1;
+      min-width: 180px;
     }
     button {
       background: linear-gradient(135deg, var(--accent), #8e7bff);
@@ -96,6 +100,24 @@
     }
     button:hover { transform: translateY(-1px); }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    button.recording {
+      background: linear-gradient(135deg, #e17055, #ff7675);
+    }
+    .section {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
     .out {
       margin-top: 18px;
       background: #0d0f14;
@@ -119,15 +141,32 @@
       border: 1px solid rgba(0,206,201,0.25);
       margin-left: 8px;
     }
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 1.2em;
+    }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🧠 AI Summarizer <span class="badge">v1</span></h1>
-    <div class="sub">Вставь текст — получить краткое содержание через нейросеть. Ключ хранится только в браузере.</div>
+    <h1>🧠 AI Summarizer <span class="badge">v2</span></h1>
+    <div class="sub">Вставь текст или распознай голос через Whisper — получи краткое содержание. Ключ хранится только в браузере.</div>
 
     <label for="text">Текст для сокращения</label>
-    <textarea id="text" placeholder="Вставь сюда длинный текст, статью или транскрипт голосового сообщения..."></textarea>
+    <textarea id="text" placeholder="Вставь сюда длинный текст, статью или распознай голос ниже..."></textarea>
+
+    <div class="section">
+      <div class="section-title">Распознавание голоса (OpenAI Whisper)</div>
+      <div class="row" style="margin-top:0">
+        <button type="button" id="rec" class="secondary">🎙 Запись</button>
+        <button type="button" id="transcribe" class="secondary">Распознать</button>
+        <input id="audioFile" type="file" accept="audio/*,video/*" />
+      </div>
+      <div class="status" id="voiceStatus">Можно записать с микрофона или выбрать аудиофайл.</div>
+      <div class="hint">Для Whisper нужен OpenAI-ключ (<code>sk-...</code>), даже если для сокращения выбран Anthropic.</div>
+    </div>
 
     <div class="row">
       <label style="margin:0">Провайдер:</label>
@@ -138,7 +177,7 @@
       <input id="key" type="password" placeholder="API ключ" style="flex:1; min-width:180px" />
       <button id="go">Сократить</button>
     </div>
-    <div class="hint">Ключ никуда не отправляется. Для OpenAI нужен ключ с <code>sk-...</code>, для Anthropic — с <code>sk-ant-...</code>.</div>
+    <div class="hint">Ключ никуда не отправляется на наш сервер. Для OpenAI — <code>sk-...</code>, для Anthropic — <code>sk-ant-...</code>.</div>
 
     <div class="out" id="out">Результат появится здесь.</div>
   </div>
@@ -146,12 +185,137 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const out = $('out');
+    const voiceStatus = $('voiceStatus');
+
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let audioBlob = null;
+
+    function setVoiceStatus(msg) {
+      voiceStatus.textContent = msg;
+    }
+
+    function openaiKeyForWhisper() {
+      const key = $('key').value.trim();
+      if (!key) return null;
+      if (key.startsWith('sk-ant-')) return null;
+      return key;
+    }
+
+    function pickMimeType() {
+      const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg'
+      ];
+      for (const type of candidates) {
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) return type;
+      }
+      return '';
+    }
+
+    async function toggleRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setVoiceStatus('Микрофон в этом браузере недоступен. Загрузи аудиофайл.');
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordedChunks = [];
+        const mimeType = pickMimeType();
+        mediaRecorder = mimeType
+          ? new MediaRecorder(stream, { mimeType })
+          : new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach((t) => t.stop());
+          audioBlob = new Blob(recordedChunks, {
+            type: mediaRecorder.mimeType || 'audio/webm'
+          });
+          $('audioFile').value = '';
+          $('rec').textContent = '🎙 Запись';
+          $('rec').classList.remove('recording');
+          setVoiceStatus('Запись готова. Нажми «Распознать».');
+        };
+        mediaRecorder.start();
+        $('rec').textContent = '⏹ Стоп';
+        $('rec').classList.add('recording');
+        setVoiceStatus('Идёт запись…');
+      } catch (e) {
+        setVoiceStatus('Не удалось получить доступ к микрофону: ' + e.message);
+      }
+    }
+
+    $('audioFile').addEventListener('change', () => {
+      const file = $('audioFile').files[0];
+      if (!file) return;
+      audioBlob = file;
+      setVoiceStatus('Файл выбран: ' + file.name + '. Нажми «Распознать».');
+    });
+
+    async function transcribe() {
+      const key = openaiKeyForWhisper();
+      if (!key) {
+        out.textContent = 'Для Whisper нужен OpenAI API ключ (sk-...), не Anthropic.';
+        out.classList.add('err');
+        return;
+      }
+      if (!audioBlob) {
+        out.textContent = 'Сначала запиши голос или выбери аудиофайл.';
+        out.classList.add('err');
+        return;
+      }
+
+      out.classList.remove('err');
+      out.textContent = 'Распознаю через Whisper…';
+      setVoiceStatus('Отправляю аудио в Whisper API…');
+      $('transcribe').disabled = true;
+      $('rec').disabled = true;
+      $('go').disabled = true;
+
+      try {
+        const form = new FormData();
+        const filename = audioBlob.name || 'recording.webm';
+        form.append('file', audioBlob, filename);
+        form.append('model', 'whisper-1');
+        form.append('language', 'ru');
+        form.append('response_format', 'json');
+
+        const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + key },
+          body: form
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error?.message || 'Whisper error');
+        const transcript = (data.text || '').trim();
+        if (!transcript) throw new Error('Пустой результат распознавания');
+        $('text').value = transcript;
+        out.textContent = 'Готово. Текст вставлен выше — можно нажать «Сократить».';
+        setVoiceStatus('Распознавание завершено.');
+      } catch (e) {
+        out.textContent = 'Ошибка Whisper: ' + e.message;
+        out.classList.add('err');
+        setVoiceStatus('Не удалось распознать аудио.');
+      } finally {
+        $('transcribe').disabled = false;
+        $('rec').disabled = false;
+        $('go').disabled = false;
+      }
+    }
 
     async function summarize() {
       const text = $('text').value.trim();
       const key = $('key').value.trim();
       const provider = $('provider').value;
-      if (!text) { out.textContent = 'Сначала вставь текст.'; out.classList.add('err'); return; }
+      if (!text) { out.textContent = 'Сначала вставь текст или распознай голос.'; out.classList.add('err'); return; }
       if (!key) { out.textContent = 'Вставь API ключ.'; out.classList.add('err'); return; }
       out.classList.remove('err');
       out.textContent = 'Думаю...';
@@ -202,6 +366,8 @@
       }
     }
 
+    $('rec').addEventListener('click', toggleRecording);
+    $('transcribe').addEventListener('click', transcribe);
     $('go').addEventListener('click', summarize);
     $('text').addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') summarize();
