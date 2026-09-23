@@ -75,7 +75,7 @@
       margin-top: 14px;
       flex-wrap: wrap;
     }
-    select, input[type=password], input[type=file] {
+    select, input[type=file] {
       background: #0d0f14;
       border: 1px solid var(--border);
       color: var(--text);
@@ -147,12 +147,26 @@
       margin-top: 8px;
       min-height: 1.2em;
     }
+    .banner {
+      display: none;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,118,117,0.35);
+      background: rgba(255,118,117,0.08);
+      color: #ffb8b3;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .banner.show { display: block; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🧠 AI Summarizer <span class="badge">v3 Groq</span></h1>
-    <div class="sub">Вставь текст или распознай голос — получи краткое содержание. Groq работает бесплатно, без карты.</div>
+    <h1>🧠 AI Summarizer <span class="badge">Vercel</span></h1>
+    <div class="sub">Текст или голос → краткое содержание. API-ключ только на сервере (переменные окружения), в коде и в браузере его нет.</div>
+
+    <div id="banner" class="banner"></div>
 
     <label for="text">Текст для сокращения</label>
     <textarea id="text" placeholder="Вставь сюда длинный текст, статью или распознай голос ниже..."></textarea>
@@ -165,20 +179,19 @@
         <input id="audioFile" type="file" accept="audio/*,video/*" />
       </div>
       <div class="status" id="voiceStatus">Можно записать с микрофона или выбрать аудиофайл.</div>
-      <div class="hint">Для голоса нужен ключ OpenAI (<code>sk-...</code>) или Groq (<code>gsk_...</code>).</div>
+      <div class="hint">Голос идёт на серверный `/api/transcribe` → Whisper (Groq или OpenAI). Ключ берётся из env.</div>
     </div>
 
     <div class="row">
-      <label style="margin:0">Провайдер:</label>
+      <label style="margin:0" for="provider">Провайдер:</label>
       <select id="provider">
-        <option value="groq" selected>Groq (бесплатно)</option>
+        <option value="groq">Groq</option>
         <option value="openai">OpenAI</option>
         <option value="anthropic">Anthropic</option>
       </select>
-      <input id="key" type="password" placeholder="API ключ" style="flex:1; min-width:180px" />
       <button id="go">Сократить</button>
     </div>
-    <div class="hint">Ключ никуда не уходит на наш сервер. Groq — <code>gsk_...</code>, OpenAI — <code>sk-...</code>, Anthropic — <code>sk-ant-...</code>.</div>
+    <div class="hint">Запрос уходит на `/api/summarize`. На клиенте нет поля для ключа и нет ключа в исходниках.</div>
 
     <div class="out" id="out">Результат появится здесь.</div>
   </div>
@@ -187,44 +200,70 @@
     const $ = (id) => document.getElementById(id);
     const out = $('out');
     const voiceStatus = $('voiceStatus');
+    const banner = $('banner');
 
     let mediaRecorder = null;
     let recordedChunks = [];
     let audioBlob = null;
+    let health = { ok: false, providers: {}, whisper: false };
 
     function setVoiceStatus(msg) {
       voiceStatus.textContent = msg;
     }
 
-    function whisperTarget() {
-      const key = $('key').value.trim();
-      const provider = $('provider').value;
-      if (!key) return null;
-      if (provider === 'groq' || key.startsWith('gsk_')) {
-        return {
-          key,
-          url: 'https://api.groq.com/openai/v1/audio/transcriptions',
-          model: 'whisper-large-v3'
-        };
+    function setBusy(busy) {
+      $('go').disabled = busy || !health.ok;
+      $('transcribe').disabled = busy || !health.whisper;
+      $('rec').disabled = busy || !health.whisper;
+    }
+
+    function showBanner(msg) {
+      banner.textContent = msg;
+      banner.classList.add('show');
+    }
+
+    function hideBanner() {
+      banner.classList.remove('show');
+      banner.textContent = '';
+    }
+
+    async function loadHealth() {
+      try {
+        const res = await fetch('/api/health', { cache: 'no-store' });
+        health = await res.json();
+      } catch (e) {
+        health = { ok: false, providers: {}, whisper: false };
+        showBanner('Не удалось связаться с API. Открой сайт через Vercel (не как локальный file://).');
+        setBusy(false);
+        return;
       }
-      if (key.startsWith('sk-ant-')) return null;
-      if (key.startsWith('sk-') || provider === 'openai') {
-        return {
-          key,
-          url: 'https://api.openai.com/v1/audio/transcriptions',
-          model: 'whisper-1'
-        };
+
+      const select = $('provider');
+      [...select.options].forEach((opt) => {
+        const on = Boolean(health.providers && health.providers[opt.value]);
+        opt.disabled = !on;
+        opt.textContent = opt.value === 'groq' ? 'Groq' : opt.value === 'openai' ? 'OpenAI' : 'Anthropic';
+        if (!on) opt.textContent += ' (нет ключа)';
+      });
+      if (health.preferred && health.providers[health.preferred]) {
+        select.value = health.preferred;
+      } else {
+        const first = [...select.options].find((o) => !o.disabled);
+        if (first) select.value = first.value;
       }
-      return null;
+
+      if (!health.ok) {
+        showBanner(health.message || 'Ключ не настроен. Добавь GROQ_API_KEY (или OPENAI_API_KEY / ANTHROPIC_API_KEY) в Environment Variables на Vercel и сделай Redeploy. Без ключа сокращение и голос недоступны.');
+      } else if (!health.whisper) {
+        showBanner('Саммари доступно, но для голоса нужен GROQ_API_KEY или OPENAI_API_KEY.');
+      } else {
+        hideBanner();
+      }
+      setBusy(false);
     }
 
     function pickMimeType() {
-      const candidates = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/mp4',
-        'audio/ogg'
-      ];
+      const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
       for (const type of candidates) {
         if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) return type;
       }
@@ -276,10 +315,22 @@
       setVoiceStatus('Файл выбран: ' + file.name + '. Нажми «Распознать».');
     });
 
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          const base64 = result.includes(',') ? result.split(',')[1] : result;
+          resolve(base64);
+        };
+        reader.onerror = () => reject(reader.error || new Error('FileReader failed'));
+        reader.readAsDataURL(blob);
+      });
+    }
+
     async function transcribe() {
-      const target = whisperTarget();
-      if (!target) {
-        out.textContent = 'Для Whisper нужен ключ Groq (gsk_...) или OpenAI (sk-...).';
+      if (!health.whisper) {
+        out.textContent = 'Голос недоступен: нет GROQ_API_KEY / OPENAI_API_KEY на сервере.';
         out.classList.add('err');
         return;
       }
@@ -291,98 +342,67 @@
 
       out.classList.remove('err');
       out.textContent = 'Распознаю через Whisper…';
-      setVoiceStatus('Отправляю аудио в Whisper API…');
-      $('transcribe').disabled = true;
-      $('rec').disabled = true;
-      $('go').disabled = true;
+      setVoiceStatus('Отправляю аудио на /api/transcribe…');
+      setBusy(true);
 
       try {
-        const form = new FormData();
-        const filename = audioBlob.name || 'recording.webm';
-        form.append('file', audioBlob, filename);
-        form.append('model', target.model);
-        form.append('language', 'ru');
-        form.append('response_format', 'json');
-
-        const res = await fetch(target.url, {
+        const audioBase64 = await blobToBase64(audioBlob);
+        const res = await fetch('/api/transcribe', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + target.key },
-          body: form
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            audioBase64,
+            mimeType: audioBlob.type || 'audio/webm',
+            filename: audioBlob.name || 'recording.webm'
+          })
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error?.message || 'Whisper error');
+        if (!res.ok) throw new Error(data.error || 'Whisper error');
         const transcript = (data.text || '').trim();
         if (!transcript) throw new Error('Пустой результат распознавания');
         $('text').value = transcript;
         out.textContent = 'Готово. Текст вставлен выше — можно нажать «Сократить».';
-        setVoiceStatus('Распознавание завершено.');
+        setVoiceStatus('Распознавание завершено (' + (data.provider || 'whisper') + ').');
       } catch (e) {
         out.textContent = 'Ошибка Whisper: ' + e.message;
         out.classList.add('err');
         setVoiceStatus('Не удалось распознать аудио.');
       } finally {
-        $('transcribe').disabled = false;
-        $('rec').disabled = false;
-        $('go').disabled = false;
+        setBusy(false);
       }
     }
 
     async function summarize() {
       const text = $('text').value.trim();
-      const key = $('key').value.trim();
       const provider = $('provider').value;
-      if (!text) { out.textContent = 'Сначала вставь текст или распознай голос.'; out.classList.add('err'); return; }
-      if (!key) { out.textContent = 'Вставь API ключ.'; out.classList.add('err'); return; }
+      if (!text) {
+        out.textContent = 'Сначала вставь текст или распознай голос.';
+        out.classList.add('err');
+        return;
+      }
+      if (!health.ok) {
+        out.textContent = 'Ключ не настроен на сервере. Добавь переменную окружения на Vercel.';
+        out.classList.add('err');
+        return;
+      }
+
       out.classList.remove('err');
       out.textContent = 'Думаю...';
-      $('go').disabled = true;
+      setBusy(true);
       try {
-        let summary;
-        if (provider === 'openai' || provider === 'groq') {
-          const url = provider === 'groq'
-            ? 'https://api.groq.com/openai/v1/chat/completions'
-            : 'https://api.openai.com/v1/chat/completions';
-          const model = provider === 'groq' ? 'openai/gpt-oss-20b' : 'gpt-4o-mini';
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: 'system', content: 'Ты — ассистент по сокращению текстов. Дай краткое, чёткое резюме на русском языке: 3–5 пунктов, главное сначала.' },
-                { role: 'user', content: text }
-              ],
-              temperature: 0.3
-            })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error?.message || (provider === 'groq' ? 'Groq error' : 'OpenAI error'));
-          summary = data.choices[0].message.content;
-        } else {
-          const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-              model: 'claude-3-5-haiku-20241022',
-              max_tokens: 500,
-              system: 'Ты — ассистент по сокращению текстов. Дай краткое, чёткое резюме на русском языке: 3–5 пунктов, главное сначала.',
-              messages: [{ role: 'user', content: text }]
-            })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error?.message || 'Anthropic error');
-          summary = data.content[0].text;
-        }
-        out.textContent = summary;
+        const res = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, provider })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Summarize error');
+        out.textContent = data.summary;
       } catch (e) {
         out.textContent = 'Ошибка: ' + e.message;
         out.classList.add('err');
       } finally {
-        $('go').disabled = false;
+        setBusy(false);
       }
     }
 
@@ -392,6 +412,8 @@
     $('text').addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') summarize();
     });
+
+    loadHealth();
   </script>
 </body>
 </html>
