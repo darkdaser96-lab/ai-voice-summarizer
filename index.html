@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Краткое содержание — AI Summarizer</title>
+  <title>Краткое содержание — без ключей</title>
   <style>
     :root {
       --bg: #0f1115;
@@ -13,6 +13,8 @@
       --text: #e8eaf0;
       --muted: #8b93a7;
       --border: #2a2f3a;
+      --danger: #ff7675;
+      --ok: #55efc4;
     }
     * { box-sizing: border-box; }
     body {
@@ -45,7 +47,18 @@
     .sub {
       color: var(--muted);
       font-size: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+      line-height: 1.45;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0,206,201,0.12);
+      color: var(--accent-2);
+      border: 1px solid rgba(0,206,201,0.35);
+      margin-bottom: 16px;
     }
     label {
       display: block;
@@ -75,345 +88,293 @@
       margin-top: 14px;
       flex-wrap: wrap;
     }
-    select, input[type=file] {
+    select {
       background: #0d0f14;
       border: 1px solid var(--border);
-      color: var(--text);
       border-radius: 10px;
+      color: var(--text);
       padding: 10px 12px;
       font-size: 14px;
     }
-    input[type=file] {
-      flex: 1;
-      min-width: 180px;
-    }
     button {
-      background: linear-gradient(135deg, var(--accent), #8e7bff);
-      color: white;
       border: none;
-      border-radius: 12px;
-      padding: 12px 20px;
-      font-size: 15px;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform .08s ease, opacity .15s ease;
+      transition: transform .08s ease, opacity .15s;
     }
-    button:hover { transform: translateY(-1px); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    button.secondary {
-      background: transparent;
-      border: 1px solid var(--border);
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #a29bfe);
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #232833;
       color: var(--text);
+      border: 1px solid var(--border);
     }
-    button.recording {
-      background: linear-gradient(135deg, #e17055, #ff7675);
+    .btn-rec {
+      background: linear-gradient(135deg, #d63031, #e17055);
+      color: #fff;
     }
-    .section {
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
+    .btn-rec.listening {
+      animation: pulse 1.2s ease infinite;
     }
-    .section-title {
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(214,48,49,0.45); }
+      50% { box-shadow: 0 0 0 10px rgba(214,48,49,0); }
+    }
+    .status {
+      margin-top: 12px;
       font-size: 13px;
       color: var(--muted);
-      margin-bottom: 10px;
+      min-height: 1.2em;
     }
-    .out {
+    .status.error { color: var(--danger); }
+    .status.ok { color: var(--ok); }
+    .result {
       margin-top: 18px;
+      padding: 16px;
       background: #0d0f14;
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
-      min-height: 80px;
+      display: none;
+    }
+    .result.show { display: block; }
+    .result h2 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .result p {
+      margin: 0;
       white-space: pre-wrap;
       line-height: 1.55;
       font-size: 15px;
     }
-    .err { color: #ff7675; }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(0,206,201,0.12);
-      color: var(--accent-2);
-      border: 1px solid rgba(0,206,201,0.25);
-      margin-left: 8px;
-    }
-    .status {
+    .meta {
+      margin-top: 8px;
       font-size: 12px;
       color: var(--muted);
-      margin-top: 8px;
-      min-height: 1.2em;
     }
-    .banner {
-      display: none;
-      margin-bottom: 16px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,118,117,0.35);
-      background: rgba(255,118,117,0.08);
-      color: #ffb8b3;
-      font-size: 14px;
-      line-height: 1.45;
+    .hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
     }
-    .banner.show { display: block; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🧠 AI Summarizer <span class="badge">Vercel</span></h1>
-    <div class="sub">Текст или голос → краткое содержание. API-ключ только на сервере (переменные окружения), в коде и в браузере его нет.</div>
+    <span class="badge">Без ключей · всё в браузере</span>
+    <h1>Краткое содержание</h1>
+    <p class="sub">
+      Голос — через встроенное распознавание браузера (Web Speech API).
+      Сокращение — локальный extractive-алгоритм на JavaScript, без сервера и нейросети.
+    </p>
 
-    <div id="banner" class="banner"></div>
-
-    <label for="text">Текст для сокращения</label>
-    <textarea id="text" placeholder="Вставь сюда длинный текст, статью или распознай голос ниже..."></textarea>
-
-    <div class="section">
-      <div class="section-title">Распознавание голоса (Whisper)</div>
-      <div class="row" style="margin-top:0">
-        <button type="button" id="rec" class="secondary">🎤 Запись</button>
-        <button type="button" id="transcribe" class="secondary">Распознать</button>
-        <input id="audioFile" type="file" accept="audio/*,video/*" />
-      </div>
-      <div class="status" id="voiceStatus">Можно записать с микрофона или выбрать аудиофайл.</div>
-      <div class="hint">Голос идёт на серверный `/api/transcribe` → Whisper (Groq или OpenAI). Ключ берётся из env.</div>
-    </div>
+    <label for="text">Текст</label>
+    <textarea id="text" placeholder="Вставьте текст или надиктуйте голосом…"></textarea>
 
     <div class="row">
-      <label style="margin:0" for="provider">Провайдер:</label>
-      <select id="provider">
-        <option value="groq">Groq</option>
-        <option value="openai">OpenAI</option>
-        <option value="anthropic">Anthropic</option>
+      <button type="button" class="btn-rec" id="btnVoice">🎤 Диктовать</button>
+      <button type="button" class="btn-secondary" id="btnClear">Очистить</button>
+      <label for="ratio" style="margin:0">Краткость</label>
+      <select id="ratio" aria-label="Краткость">
+        <option value="0.3">Коротко (~30%)</option>
+        <option value="0.45" selected>Средне (~45%)</option>
+        <option value="0.6">Подробнее (~60%)</option>
       </select>
-      <button id="go">Сократить</button>
+      <button type="button" class="btn-primary" id="btnSummarize">Сократить</button>
     </div>
-    <div class="hint">Запрос уходит на `/api/summarize`. На клиенте нет поля для ключа и нет ключа в исходниках.</div>
 
-    <div class="out" id="out">Результат появится здесь.</div>
+    <p class="hint" id="voiceHint">Голос лучше всего работает в Chrome / Edge. Разрешите доступ к микрофону.</p>
+    <div class="status" id="status"></div>
+
+    <div class="result" id="result">
+      <h2>Результат</h2>
+      <p id="summary"></p>
+      <div class="meta" id="meta"></div>
+    </div>
   </div>
 
   <script>
-    const $ = (id) => document.getElementById(id);
-    const out = $('out');
-    const voiceStatus = $('voiceStatus');
-    const banner = $('banner');
+    (function () {
+      const STOP = new Set([
+        'и','в','во','не','что','он','на','я','с','со','как','а','то','все','она','так','его','но','да','ты','к','у','же','вы','за','бы','по','только','ее','мне','было','вот','от','меня','еще','нет','о','из','ему','теперь','когда','даже','ну','вдруг','ли','если','уже','или','ни','быть','был','него','до','вас','нибудь','опять','уж','вам','ведь','там','потом','себя','ничего','ей','может','они','тут','где','есть','надо','ней','для','мы','тебя','их','чем','была','сам','чтоб','без','будто','чего','раз','тоже','себе','под','будет','ж','тогда','кто','этот','того','потому','этого','какой','совсем','ним','здесь','этом','один','почти','мой','тем','чтобы','нее','сейчас','были','куда','зачем','всех','никогда','можно','при','наконец','два','об','другой','хоть','после','над','больше','тот','через','эти','нас','про','всего','них','какая','много','разве','три','эту','моя','впрочем','хорошо','свою','этой','перед','иногда','лучше','чуть','том','нельзя','такой','им','более','всегда','конечно','всю','между','the','a','an','and','or','of','to','in','is','it','for','on','with','as','by','at','from','this','that'
+      ]);
 
-    let mediaRecorder = null;
-    let recordedChunks = [];
-    let audioBlob = null;
-    let health = { ok: false, providers: {}, whisper: false };
+      const textEl = document.getElementById('text');
+      const statusEl = document.getElementById('status');
+      const resultEl = document.getElementById('result');
+      const summaryEl = document.getElementById('summary');
+      const metaEl = document.getElementById('meta');
+      const btnVoice = document.getElementById('btnVoice');
+      const btnClear = document.getElementById('btnClear');
+      const btnSummarize = document.getElementById('btnSummarize');
+      const ratioEl = document.getElementById('ratio');
+      const voiceHint = document.getElementById('voiceHint');
 
-    function setVoiceStatus(msg) {
-      voiceStatus.textContent = msg;
-    }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let recognition = null;
+      let listening = false;
 
-    function setBusy(busy) {
-      $('go').disabled = busy || !health.ok;
-      $('transcribe').disabled = busy || !health.whisper;
-      $('rec').disabled = busy || !health.whisper;
-    }
-
-    function showBanner(msg) {
-      banner.textContent = msg;
-      banner.classList.add('show');
-    }
-
-    function hideBanner() {
-      banner.classList.remove('show');
-      banner.textContent = '';
-    }
-
-    async function loadHealth() {
-      try {
-        const res = await fetch('/api/health', { cache: 'no-store' });
-        health = await res.json();
-      } catch (e) {
-        health = { ok: false, providers: {}, whisper: false };
-        showBanner('Не удалось связаться с API. Открой сайт через Vercel (не как локальный file://).');
-        setBusy(false);
-        return;
+      function setStatus(msg, kind) {
+        statusEl.textContent = msg || '';
+        statusEl.className = 'status' + (kind ? ' ' + kind : '');
       }
 
-      const select = $('provider');
-      [...select.options].forEach((opt) => {
-        const on = Boolean(health.providers && health.providers[opt.value]);
-        opt.disabled = !on;
-        opt.textContent = opt.value === 'groq' ? 'Groq' : opt.value === 'openai' ? 'OpenAI' : 'Anthropic';
-        if (!on) opt.textContent += ' (нет ключа)';
-      });
-      if (health.preferred && health.providers[health.preferred]) {
-        select.value = health.preferred;
-      } else {
-        const first = [...select.options].find((o) => !o.disabled);
-        if (first) select.value = first.value;
+      function tokenize(word) {
+        return word.toLowerCase().replace(/[^\p{L}\p{N}-]+/gu, '');
       }
 
-      if (!health.ok) {
-        showBanner(health.message || 'Ключ не настроен. Добавь GROQ_API_KEY (или OPENAI_API_KEY / ANTHROPIC_API_KEY) в Environment Variables на Vercel и сделай Redeploy. Без ключа сокращение и голос недоступны.');
-      } else if (!health.whisper) {
-        showBanner('Саммари доступно, но для голоса нужен GROQ_API_KEY или OPENAI_API_KEY.');
-      } else {
-        hideBanner();
+      function splitSentences(text) {
+        const cleaned = text.replace(/\s+/g, ' ').trim();
+        if (!cleaned) return [];
+        const parts = cleaned.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g) || [cleaned];
+        return parts.map(function (s) { return s.trim(); }).filter(Boolean);
       }
-      setBusy(false);
-    }
 
-    function pickMimeType() {
-      const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
-      for (const type of candidates) {
-        if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) return type;
-      }
-      return '';
-    }
+      /** Локальное extractive-сокращение: частота слов → топ предложений по порядку */
+      function summarizeLocal(text, ratio) {
+        const sentences = splitSentences(text);
+        if (sentences.length === 0) return { summary: '', info: 'Пустой текст' };
+        if (sentences.length === 1) {
+          return { summary: sentences[0], info: '1 предложение' };
+        }
 
-    async function toggleRecording() {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        return;
-      }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setVoiceStatus('Микрофон в этом браузере недоступен. Загрузи аудиофайл.');
-        return;
-      }
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        recordedChunks = [];
-        const mimeType = pickMimeType();
-        mediaRecorder = mimeType
-          ? new MediaRecorder(stream, { mimeType })
-          : new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-        };
-        mediaRecorder.onstop = () => {
-          stream.getTracks().forEach((t) => t.stop());
-          audioBlob = new Blob(recordedChunks, {
-            type: mediaRecorder.mimeType || 'audio/webm'
+        const freq = Object.create(null);
+        sentences.forEach(function (sent) {
+          sent.split(/\s+/).forEach(function (w) {
+            const t = tokenize(w);
+            if (!t || t.length < 2 || STOP.has(t)) return;
+            freq[t] = (freq[t] || 0) + 1;
           });
-          $('audioFile').value = '';
-          $('rec').textContent = '🎤 Запись';
-          $('rec').classList.remove('recording');
-          setVoiceStatus('Запись готова. Нажми «Распознать».');
+        });
+
+        const scored = sentences.map(function (sent, index) {
+          let score = 0;
+          let words = 0;
+          sent.split(/\s+/).forEach(function (w) {
+            const t = tokenize(w);
+            if (!t || STOP.has(t)) return;
+            words += 1;
+            score += freq[t] || 0;
+          });
+          // чуть выше вес началу текста
+          const positionBoost = 1 + Math.max(0, 0.15 - index * 0.02);
+          const norm = words ? score / words : 0;
+          return { sent: sent, index: index, score: norm * positionBoost };
+        });
+
+        let keep = Math.max(1, Math.round(sentences.length * ratio));
+        keep = Math.min(keep, sentences.length);
+
+        const picked = scored
+          .slice()
+          .sort(function (a, b) { return b.score - a.score; })
+          .slice(0, keep)
+          .sort(function (a, b) { return a.index - b.index; });
+
+        const summary = picked.map(function (p) { return p.sent; }).join(' ');
+        const origWords = text.trim().split(/\s+/).length;
+        const sumWords = summary.trim().split(/\s+/).filter(Boolean).length;
+        return {
+          summary: summary,
+          info: origWords + ' → ' + sumWords + ' слов · ' + sentences.length + ' → ' + keep + ' предл.'
         };
-        mediaRecorder.start();
-        $('rec').textContent = '⏹ Стоп';
-        $('rec').classList.add('recording');
-        setVoiceStatus('Идёт запись…');
-      } catch (e) {
-        setVoiceStatus('Не удалось получить доступ к микрофону: ' + e.message);
       }
-    }
 
-    $('audioFile').addEventListener('change', () => {
-      const file = $('audioFile').files[0];
-      if (!file) return;
-      audioBlob = file;
-      setVoiceStatus('Файл выбран: ' + file.name + '. Нажми «Распознать».');
-    });
+      if (!SpeechRecognition) {
+        btnVoice.disabled = true;
+        voiceHint.textContent = 'Web Speech API в этом браузере недоступен. Вставьте текст вручную или откройте в Chrome / Edge.';
+      } else {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ru-RU';
+        recognition.continuous = true;
+        recognition.interimResults = true;
 
-    function blobToBase64(blob) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = String(reader.result || '');
-          const base64 = result.includes(',') ? result.split(',')[1] : result;
-          resolve(base64);
+        recognition.onstart = function () {
+          listening = true;
+          btnVoice.textContent = '⏹ Стоп';
+          btnVoice.classList.add('listening');
+          setStatus('Слушаю… говорите', 'ok');
         };
-        reader.onerror = () => reject(reader.error || new Error('FileReader failed'));
-        reader.readAsDataURL(blob);
+
+        recognition.onerror = function (e) {
+          const map = {
+            'not-allowed': 'Нет доступа к микрофону. Разрешите его в настройках сайта.',
+            'no-speech': 'Речь не распознана. Попробуйте ещё раз.',
+            'audio-capture': 'Микрофон не найден.',
+            'network': 'Нужен интернет для распознавания речи в браузере.'
+          };
+          setStatus(map[e.error] || ('Ошибка распознавания: ' + e.error), 'error');
+        };
+
+        recognition.onend = function () {
+          listening = false;
+          btnVoice.textContent = '🎤 Диктовать';
+          btnVoice.classList.remove('listening');
+          if (statusEl.textContent.indexOf('Слушаю') === 0) {
+            setStatus('Диктовка остановлена');
+          }
+        };
+
+        recognition.onresult = function (event) {
+          let finalChunk = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const res = event.results[i];
+            if (res.isFinal) finalChunk += res[0].transcript;
+          }
+          if (finalChunk) {
+            const cur = textEl.value;
+            const needsSpace = cur && !/\s$/.test(cur);
+            textEl.value = cur + (needsSpace ? ' ' : '') + finalChunk.trim();
+          }
+        };
+      }
+
+      btnVoice.addEventListener('click', function () {
+        if (!recognition) return;
+        if (listening) {
+          recognition.stop();
+          return;
+        }
+        try {
+          recognition.start();
+        } catch (err) {
+          setStatus('Не удалось запустить микрофон', 'error');
+        }
       });
-    }
 
-    async function transcribe() {
-      if (!health.whisper) {
-        out.textContent = 'Голос недоступен: нет GROQ_API_KEY / OPENAI_API_KEY на сервере.';
-        out.classList.add('err');
-        return;
-      }
-      if (!audioBlob) {
-        out.textContent = 'Сначала запиши голос или выбери аудиофайл.';
-        out.classList.add('err');
-        return;
-      }
+      btnClear.addEventListener('click', function () {
+        textEl.value = '';
+        resultEl.classList.remove('show');
+        summaryEl.textContent = '';
+        metaEl.textContent = '';
+        setStatus('');
+      });
 
-      out.classList.remove('err');
-      out.textContent = 'Распознаю через Whisper…';
-      setVoiceStatus('Отправляю аудио на /api/transcribe…');
-      setBusy(true);
-
-      try {
-        const audioBase64 = await blobToBase64(audioBlob);
-        const res = await fetch('/api/transcribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            audioBase64,
-            mimeType: audioBlob.type || 'audio/webm',
-            filename: audioBlob.name || 'recording.webm'
-          })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'Whisper error');
-        const transcript = (data.text || '').trim();
-        if (!transcript) throw new Error('Пустой результат распознавания');
-        $('text').value = transcript;
-        out.textContent = 'Готово. Текст вставлен выше — можно нажать «Сократить».';
-        setVoiceStatus('Распознавание завершено (' + (data.provider || 'whisper') + ').');
-      } catch (e) {
-        out.textContent = 'Ошибка Whisper: ' + e.message;
-        out.classList.add('err');
-        setVoiceStatus('Не удалось распознать аудио.');
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    async function summarize() {
-      const text = $('text').value.trim();
-      const provider = $('provider').value;
-      if (!text) {
-        out.textContent = 'Сначала вставь текст или распознай голос.';
-        out.classList.add('err');
-        return;
-      }
-      if (!health.ok) {
-        out.textContent = 'Ключ не настроен на сервере. Добавь переменную окружения на Vercel.';
-        out.classList.add('err');
-        return;
-      }
-
-      out.classList.remove('err');
-      out.textContent = 'Думаю...';
-      setBusy(true);
-      try {
-        const res = await fetch('/api/summarize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, provider })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'Summarize error');
-        out.textContent = data.summary;
-      } catch (e) {
-        out.textContent = 'Ошибка: ' + e.message;
-        out.classList.add('err');
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    $('rec').addEventListener('click', toggleRecording);
-    $('transcribe').addEventListener('click', transcribe);
-    $('go').addEventListener('click', summarize);
-    $('text').addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') summarize();
-    });
-
-    loadHealth();
+      btnSummarize.addEventListener('click', function () {
+        const text = textEl.value.trim();
+        if (!text) {
+          setStatus('Вставьте или надиктуйте текст', 'error');
+          return;
+        }
+        const ratio = parseFloat(ratioEl.value, 10) || 0.45;
+        const out = summarizeLocal(text, ratio);
+        summaryEl.textContent = out.summary;
+        metaEl.textContent = out.info;
+        resultEl.classList.add('show');
+        setStatus('Готово — локально в браузере', 'ok');
+      });
+    })();
   </script>
 </body>
 </html>
