@@ -4,20 +4,20 @@
 
 | Функция | Как работает |
 |---|---|
-| Голос | [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) в браузере (Chrome / Edge, нужен микрофон и интернет у движка распознавания) |
+| Голос | [Web Speech API](https://developer.mozilla.org/docs/Web/API/Web_Speech_API) в браузере (Chrome / Edge, нужен микрофон) |
 | Сокращение | Локальный extractive-алгоритм на JavaScript (частота слов → важные предложения) |
 
 Серверной нейросети нет. Папки `/api` нет. Переменные окружения не нужны.
 
+**Сайт:** https://ai-voice-summarizer.vercel.app
+
 ## Деплой на Vercel
 
-1. Import репозиторий `darkdaser96-lab/ai-voice-summarizer` на [vercel.com](https://vercel.com).
+1. Import репозиторий `darkdaser96-lab/ai-voice-summarizer`.
 2. Framework Preset: **Other** (статика).
 3. Deploy — ключи добавлять не нужно.
 
-После пуша в `main` проект пересоберётся сам, если репозиторий уже привязан.
-
-Локально: открой `index.html` в браузере или `npx serve .`.
+Локально: открой `index.html` в браузере.
 
 ## Как пользоваться
 
@@ -27,6 +27,5 @@
 
 ## Ограничения
 
-- Распознавание речи зависит от браузера (лучше Chrome / Edge). В Firefox / Safari может не быть.
-- Сокращение — extractive (выбирает фразы из текста), не «переписывает» как LLM.
-- Качество саммари на очень коротких или бессвязных текстах ограничено.
+- Распознавание речи зависит от браузера (лучше Chrome / Edge).
+- Сокращение extractive: выбирает фразы из текста, не переписывает как LLM.

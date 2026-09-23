@@ -1,380 +1,75 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Краткое содержание — без ключей</title>
-  <style>
-    :root {
-      --bg: #0f1115;
-      --panel: #171a21;
-      --accent: #6c5ce7;
-      --accent-2: #00cec9;
-      --text: #e8eaf0;
-      --muted: #8b93a7;
-      --border: #2a2f3a;
-      --danger: #ff7675;
-      --ok: #55efc4;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: radial-gradient(1200px 600px at 80% -10%, rgba(108,92,231,0.18), transparent),
-                  radial-gradient(900px 500px at 0% 100%, rgba(0,206,201,0.12), transparent),
-                  var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .card {
-      width: 100%;
-      max-width: 760px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
-    }
-    h1 {
-      margin: 0 0 6px;
-      font-size: 24px;
-      letter-spacing: -0.02em;
-    }
-    .sub {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 16px;
-      line-height: 1.45;
-    }
-    .badge {
-      display: inline-block;
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(0,206,201,0.12);
-      color: var(--accent-2);
-      border: 1px solid rgba(0,206,201,0.35);
-      margin-bottom: 16px;
-    }
-    label {
-      display: block;
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-    textarea {
-      width: 100%;
-      min-height: 180px;
-      resize: vertical;
-      background: #0d0f14;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      padding: 14px;
-      font-size: 15px;
-      line-height: 1.5;
-      outline: none;
-      transition: border-color .15s ease;
-    }
-    textarea:focus { border-color: var(--accent); }
-    .row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-    select {
-      background: #0d0f14;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      padding: 10px 12px;
-      font-size: 14px;
-    }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 11px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform .08s ease, opacity .15s;
-    }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #a29bfe);
-      color: #fff;
-    }
-    .btn-secondary {
-      background: #232833;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-rec {
-      background: linear-gradient(135deg, #d63031, #e17055);
-      color: #fff;
-    }
-    .btn-rec.listening {
-      animation: pulse 1.2s ease infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(214,48,49,0.45); }
-      50% { box-shadow: 0 0 0 10px rgba(214,48,49,0); }
-    }
-    .status {
-      margin-top: 12px;
-      font-size: 13px;
-      color: var(--muted);
-      min-height: 1.2em;
-    }
-    .status.error { color: var(--danger); }
-    .status.ok { color: var(--ok); }
-    .result {
-      margin-top: 18px;
-      padding: 16px;
-      background: #0d0f14;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      display: none;
-    }
-    .result.show { display: block; }
-    .result h2 {
-      margin: 0 0 10px;
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .result p {
-      margin: 0;
-      white-space: pre-wrap;
-      line-height: 1.55;
-      font-size: 15px;
-    }
-    .meta {
-      margin-top: 8px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .hint {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Краткое содержание — без ключей</title>
+<style>
+:root{--bg:#0f1115;--panel:#171a21;--a:#6c5ce7;--a2:#00cec9;--t:#e8eaf0;--m:#8b93a7;--b:#2a2f3a;--d:#ff7675;--ok:#55efc4}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,rgba(108,92,231,.18),transparent),radial-gradient(900px 500px at 0% 100%,rgba(0,206,201,.12),transparent),var(--bg);color:var(--t);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:760px;background:var(--panel);border:1px solid var(--b);border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+h1{margin:0 0 6px;font-size:24px}.sub{color:var(--m);font-size:14px;margin:0 0 16px;line-height:1.45}
+.badge{display:inline-block;font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(0,206,201,.12);color:var(--a2);border:1px solid rgba(0,206,201,.35);margin-bottom:16px}
+label{display:block;font-size:13px;color:var(--m);margin-bottom:8px}
+textarea{width:100%;min-height:180px;resize:vertical;background:#0d0f14;border:1px solid var(--b);border-radius:12px;color:var(--t);padding:14px;font-size:15px;line-height:1.5;outline:none}
+textarea:focus{border-color:var(--a)}.row{display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
+select{background:#0d0f14;border:1px solid var(--b);border-radius:10px;color:var(--t);padding:10px 12px;font-size:14px}
+button{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.p{background:linear-gradient(135deg,var(--a),#a29bfe);color:#fff}
+.s{background:#232833;color:var(--t);border:1px solid var(--b)}
+.r{background:linear-gradient(135deg,#d63031,#e17055);color:#fff}
+.r.on{animation:pulse 1.2s ease infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(214,48,49,.45)}50%{box-shadow:0 0 0 10px rgba(214,48,49,0)}}
+.status{margin-top:12px;font-size:13px;color:var(--m);min-height:1.2em}.status.e{color:var(--d)}.status.o{color:var(--ok)}
+.result{margin-top:18px;padding:16px;background:#0d0f14;border:1px solid var(--b);border-radius:12px;display:none}
+.result.show{display:block}.result h2{margin:0 0 10px;font-size:14px;color:var(--m);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.result p{margin:0;white-space:pre-wrap;line-height:1.55;font-size:15px}.meta{margin-top:8px;font-size:12px;color:var(--m)}.hint{margin-top:10px;font-size:12px;color:var(--m)}
+</style>
 </head>
 <body>
-  <div class="card">
-    <span class="badge">Без ключей · всё в браузере</span>
-    <h1>Краткое содержание</h1>
-    <p class="sub">
-      Голос — через встроенное распознавание браузера (Web Speech API).
-      Сокращение — локальный extractive-алгоритм на JavaScript, без сервера и нейросети.
-    </p>
-
-    <label for="text">Текст</label>
-    <textarea id="text" placeholder="Вставьте текст или надиктуйте голосом…"></textarea>
-
-    <div class="row">
-      <button type="button" class="btn-rec" id="btnVoice">🎤 Диктовать</button>
-      <button type="button" class="btn-secondary" id="btnClear">Очистить</button>
-      <label for="ratio" style="margin:0">Краткость</label>
-      <select id="ratio" aria-label="Краткость">
-        <option value="0.3">Коротко (~30%)</option>
-        <option value="0.45" selected>Средне (~45%)</option>
-        <option value="0.6">Подробнее (~60%)</option>
-      </select>
-      <button type="button" class="btn-primary" id="btnSummarize">Сократить</button>
-    </div>
-
-    <p class="hint" id="voiceHint">Голос лучше всего работает в Chrome / Edge. Разрешите доступ к микрофону.</p>
-    <div class="status" id="status"></div>
-
-    <div class="result" id="result">
-      <h2>Результат</h2>
-      <p id="summary"></p>
-      <div class="meta" id="meta"></div>
-    </div>
-  </div>
-
-  <script>
-    (function () {
-      const STOP = new Set([
-        'и','в','во','не','что','он','на','я','с','со','как','а','то','все','она','так','его','но','да','ты','к','у','же','вы','за','бы','по','только','ее','мне','было','вот','от','меня','еще','нет','о','из','ему','теперь','когда','даже','ну','вдруг','ли','если','уже','или','ни','быть','был','него','до','вас','нибудь','опять','уж','вам','ведь','там','потом','себя','ничего','ей','может','они','тут','где','есть','надо','ней','для','мы','тебя','их','чем','была','сам','чтоб','без','будто','чего','раз','тоже','себе','под','будет','ж','тогда','кто','этот','того','потому','этого','какой','совсем','ним','здесь','этом','один','почти','мой','тем','чтобы','нее','сейчас','были','куда','зачем','всех','никогда','можно','при','наконец','два','об','другой','хоть','после','над','больше','тот','через','эти','нас','про','всего','них','какая','много','разве','три','эту','моя','впрочем','хорошо','свою','этой','перед','иногда','лучше','чуть','том','нельзя','такой','им','более','всегда','конечно','всю','между','the','a','an','and','or','of','to','in','is','it','for','on','with','as','by','at','from','this','that'
-      ]);
-
-      const textEl = document.getElementById('text');
-      const statusEl = document.getElementById('status');
-      const resultEl = document.getElementById('result');
-      const summaryEl = document.getElementById('summary');
-      const metaEl = document.getElementById('meta');
-      const btnVoice = document.getElementById('btnVoice');
-      const btnClear = document.getElementById('btnClear');
-      const btnSummarize = document.getElementById('btnSummarize');
-      const ratioEl = document.getElementById('ratio');
-      const voiceHint = document.getElementById('voiceHint');
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      let recognition = null;
-      let listening = false;
-
-      function setStatus(msg, kind) {
-        statusEl.textContent = msg || '';
-        statusEl.className = 'status' + (kind ? ' ' + kind : '');
-      }
-
-      function tokenize(word) {
-        return word.toLowerCase().replace(/[^\p{L}\p{N}-]+/gu, '');
-      }
-
-      function splitSentences(text) {
-        const cleaned = text.replace(/\s+/g, ' ').trim();
-        if (!cleaned) return [];
-        const parts = cleaned.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g) || [cleaned];
-        return parts.map(function (s) { return s.trim(); }).filter(Boolean);
-      }
-
-      /** Локальное extractive-сокращение: частота слов → топ предложений по порядку */
-      function summarizeLocal(text, ratio) {
-        const sentences = splitSentences(text);
-        if (sentences.length === 0) return { summary: '', info: 'Пустой текст' };
-        if (sentences.length === 1) {
-          return { summary: sentences[0], info: '1 предложение' };
-        }
-
-        const freq = Object.create(null);
-        sentences.forEach(function (sent) {
-          sent.split(/\s+/).forEach(function (w) {
-            const t = tokenize(w);
-            if (!t || t.length < 2 || STOP.has(t)) return;
-            freq[t] = (freq[t] || 0) + 1;
-          });
-        });
-
-        const scored = sentences.map(function (sent, index) {
-          let score = 0;
-          let words = 0;
-          sent.split(/\s+/).forEach(function (w) {
-            const t = tokenize(w);
-            if (!t || STOP.has(t)) return;
-            words += 1;
-            score += freq[t] || 0;
-          });
-          // чуть выше вес началу текста
-          const positionBoost = 1 + Math.max(0, 0.15 - index * 0.02);
-          const norm = words ? score / words : 0;
-          return { sent: sent, index: index, score: norm * positionBoost };
-        });
-
-        let keep = Math.max(1, Math.round(sentences.length * ratio));
-        keep = Math.min(keep, sentences.length);
-
-        const picked = scored
-          .slice()
-          .sort(function (a, b) { return b.score - a.score; })
-          .slice(0, keep)
-          .sort(function (a, b) { return a.index - b.index; });
-
-        const summary = picked.map(function (p) { return p.sent; }).join(' ');
-        const origWords = text.trim().split(/\s+/).length;
-        const sumWords = summary.trim().split(/\s+/).filter(Boolean).length;
-        return {
-          summary: summary,
-          info: origWords + ' → ' + sumWords + ' слов · ' + sentences.length + ' → ' + keep + ' предл.'
-        };
-      }
-
-      if (!SpeechRecognition) {
-        btnVoice.disabled = true;
-        voiceHint.textContent = 'Web Speech API в этом браузере недоступен. Вставьте текст вручную или откройте в Chrome / Edge.';
-      } else {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'ru-RU';
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        recognition.onstart = function () {
-          listening = true;
-          btnVoice.textContent = '⏹ Стоп';
-          btnVoice.classList.add('listening');
-          setStatus('Слушаю… говорите', 'ok');
-        };
-
-        recognition.onerror = function (e) {
-          const map = {
-            'not-allowed': 'Нет доступа к микрофону. Разрешите его в настройках сайта.',
-            'no-speech': 'Речь не распознана. Попробуйте ещё раз.',
-            'audio-capture': 'Микрофон не найден.',
-            'network': 'Нужен интернет для распознавания речи в браузере.'
-          };
-          setStatus(map[e.error] || ('Ошибка распознавания: ' + e.error), 'error');
-        };
-
-        recognition.onend = function () {
-          listening = false;
-          btnVoice.textContent = '🎤 Диктовать';
-          btnVoice.classList.remove('listening');
-          if (statusEl.textContent.indexOf('Слушаю') === 0) {
-            setStatus('Диктовка остановлена');
-          }
-        };
-
-        recognition.onresult = function (event) {
-          let finalChunk = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const res = event.results[i];
-            if (res.isFinal) finalChunk += res[0].transcript;
-          }
-          if (finalChunk) {
-            const cur = textEl.value;
-            const needsSpace = cur && !/\s$/.test(cur);
-            textEl.value = cur + (needsSpace ? ' ' : '') + finalChunk.trim();
-          }
-        };
-      }
-
-      btnVoice.addEventListener('click', function () {
-        if (!recognition) return;
-        if (listening) {
-          recognition.stop();
-          return;
-        }
-        try {
-          recognition.start();
-        } catch (err) {
-          setStatus('Не удалось запустить микрофон', 'error');
-        }
-      });
-
-      btnClear.addEventListener('click', function () {
-        textEl.value = '';
-        resultEl.classList.remove('show');
-        summaryEl.textContent = '';
-        metaEl.textContent = '';
-        setStatus('');
-      });
-
-      btnSummarize.addEventListener('click', function () {
-        const text = textEl.value.trim();
-        if (!text) {
-          setStatus('Вставьте или надиктуйте текст', 'error');
-          return;
-        }
-        const ratio = parseFloat(ratioEl.value, 10) || 0.45;
-        const out = summarizeLocal(text, ratio);
-        summaryEl.textContent = out.summary;
-        metaEl.textContent = out.info;
-        resultEl.classList.add('show');
-        setStatus('Готово — локально в браузере', 'ok');
-      });
-    })();
-  </script>
+<div class="card">
+<span class="badge">Без ключей · всё в браузере</span>
+<h1>Краткое содержание</h1>
+<p class="sub">Голос — Web Speech API в браузере. Сокращение — локальный extractive JS, без сервера и нейросети.</p>
+<label for="text">Текст</label>
+<textarea id="text" placeholder="Вставьте текст или надиктуйте голосом…"></textarea>
+<div class="row">
+<button type="button" class="r" id="btnVoice">🎤 Диктовать</button>
+<button type="button" class="s" id="btnClear">Очистить</button>
+<label for="ratio" style="margin:0">Краткость</label>
+<select id="ratio"><option value="0.3">Коротко (~30%)</option><option value="0.45" selected>Средне (~45%)</option><option value="0.6">Подробнее (~60%)</option></select>
+<button type="button" class="p" id="btnSummarize">Сократить</button>
+</div>
+<p class="hint" id="voiceHint">Голос лучше в Chrome / Edge. Нужен доступ к микрофону.</p>
+<div class="status" id="status"></div>
+<div class="result" id="result"><h2>Результат</h2><p id="summary"></p><div class="meta" id="meta"></div></div>
+</div>
+<script>
+(function(){
+const STOP=new Set("и в во не что он на я с со как а то все она так его но да ты к у же вы за бы по только ее мне было вот от меня еще нет о из ему теперь когда даже ну вдруг ли если уже или ни быть был него до вас опять уж вам ведь там потом себя ничего ей может они тут где есть надо ней для мы тебя их чем была сам чтоб без будто чего раз тоже себе под будет ж тогда кто этот того потому этого какой совсем ним здесь этом один почти мой тем чтобы нее сейчас были куда зачем всех никогда можно при наконец два об другой хоть после над больше тот через эти нас про всего них какая много разве три эту моя впрочем хорошо свою этой перед иногда лучше чуть том нельзя такой им более всегда конечно всю между the a an and or of to in is it for on with as by at from this that".split(" "));
+const textEl=document.getElementById("text"),statusEl=document.getElementById("status"),resultEl=document.getElementById("result"),summaryEl=document.getElementById("summary"),metaEl=document.getElementById("meta"),btnVoice=document.getElementById("btnVoice"),btnClear=document.getElementById("btnClear"),btnSummarize=document.getElementById("btnSummarize"),ratioEl=document.getElementById("ratio"),voiceHint=document.getElementById("voiceHint");
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false;
+function setStatus(m,k){statusEl.textContent=m||"";statusEl.className="status"+(k?" "+k:"");}
+function tok(w){return w.toLowerCase().replace(/[^\p{L}\p{N}-]+/gu,"");}
+function splitSentences(t){const c=t.replace(/\s+/g," ").trim();if(!c)return[];return(c.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[c]).map(s=>s.trim()).filter(Boolean);}
+function summarizeLocal(text,ratio){const sentences=splitSentences(text);if(!sentences.length)return{summary:"",info:"Пустой текст"};if(sentences.length===1)return{summary:sentences[0],info:"1 предложение"};
+const freq=Object.create(null);sentences.forEach(sent=>sent.split(/\s+/).forEach(w=>{const t=tok(w);if(!t||t.length<2||STOP.has(t))return;freq[t]=(freq[t]||0)+1;}));
+const scored=sentences.map((sent,index)=>{let score=0,words=0;sent.split(/\s+/).forEach(w=>{const t=tok(w);if(!t||STOP.has(t))return;words++;score+=freq[t]||0;});const boost=1+Math.max(0,.15-index*.02);return{sent,index,score:(words?score/words:0)*boost};});
+let keep=Math.max(1,Math.round(sentences.length*ratio));keep=Math.min(keep,sentences.length);
+const picked=scored.slice().sort((a,b)=>b.score-a.score).slice(0,keep).sort((a,b)=>a.index-b.index);
+const summary=picked.map(p=>p.sent).join(" ");const ow=text.trim().split(/\s+/).length,sw=summary.trim().split(/\s+/).filter(Boolean).length;
+return{summary,info:ow+" → "+sw+" слов · "+sentences.length+" → "+keep+" предл."};}
+if(!SR){btnVoice.disabled=true;voiceHint.textContent="Web Speech API недоступен. Вставьте текст или откройте в Chrome / Edge.";}
+else{rec=new SR();rec.lang="ru-RU";rec.continuous=true;rec.interimResults=true;
+rec.onstart=()=>{listening=true;btnVoice.textContent="⏹ Стоп";btnVoice.classList.add("on");setStatus("Слушаю… говорите","o");};
+rec.onerror=e=>{const map={"not-allowed":"Нет доступа к микрофону.","no-speech":"Речь не распознана.","audio-capture":"Микрофон не найден.","network":"Нужен интернет для распознавания речи."};setStatus(map[e.error]||("Ошибка: "+e.error),"e");};
+rec.onend=()=>{listening=false;btnVoice.textContent="🎤 Диктовать";btnVoice.classList.remove("on");if(statusEl.textContent.indexOf("Слушаю")===0)setStatus("Диктовка остановлена");};
+rec.onresult=ev=>{let chunk="";for(let i=ev.resultIndex;i<ev.results.length;i++)if(ev.results[i].isFinal)chunk+=ev.results[i][0].transcript;if(chunk){const cur=textEl.value;textEl.value=cur+(cur&&!/\s$/.test(cur)?" ":"")+chunk.trim();}};}
+btnVoice.onclick=()=>{if(!rec)return;if(listening){rec.stop();return;}try{rec.start();}catch(e){setStatus("Не удалось запустить микрофон","e");}};
+btnClear.onclick=()=>{textEl.value="";resultEl.classList.remove("show");summaryEl.textContent="";metaEl.textContent="";setStatus("");};
+btnSummarize.onclick=()=>{const text=textEl.value.trim();if(!text){setStatus("Вставьте или надиктуйте текст","e");return;}const out=summarizeLocal(text,parseFloat(ratioEl.value)||.45);summaryEl.textContent=out.summary;metaEl.textContent=out.info;resultEl.classList.add("show");setStatus("Готово — локально в браузере","o");};
+})();
+</script>
 </body>
 </html>
