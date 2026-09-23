@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Краткое содержание — без ключей</title>
+<title>Краткое содержание</title>
 <style>
 :root{--bg:#0f1115;--panel:#171a21;--a:#6c5ce7;--a2:#00cec9;--t:#e8eaf0;--m:#8b93a7;--b:#2a2f3a;--d:#ff7675;--ok:#55efc4}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,rgba(108,92,231,.18),transparent),radial-gradient(900px 500px at 0% 100%,rgba(0,206,201,.12),transparent),var(--bg);color:var(--t);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -29,9 +29,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </head>
 <body>
 <div class="card">
-<span class="badge">Без ключей · всё в браузере</span>
+<span class="badge">Голос в браузере · сокращение через Groq (ключ только на сервере)</span>
 <h1>Краткое содержание</h1>
-<p class="sub">Голос — Web Speech API в браузере. Сокращение — локальный extractive JS, без сервера и нейросети.</p>
+<p class="sub">Голос — Web Speech API. «Сократить» вызывает серверный <code>/api/summarize</code> (Groq). Если ключа нет или API недоступен — локальный запасной вариант в браузере.</p>
 <label for="text">Текст</label>
 <textarea id="text" placeholder="Вставьте текст или надиктуйте голосом…"></textarea>
 <div class="row">
@@ -53,13 +53,14 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,l
 function setStatus(m,k){statusEl.textContent=m||"";statusEl.className="status"+(k?" "+k:"");}
 function tok(w){return w.toLowerCase().replace(/[^\p{L}\p{N}-]+/gu,"");}
 function splitSentences(t){const c=t.replace(/\s+/g," ").trim();if(!c)return[];return(c.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g)||[c]).map(s=>s.trim()).filter(Boolean);}
-function summarizeLocal(text,ratio){const sentences=splitSentences(text);if(!sentences.length)return{summary:"",info:"Пустой текст"};if(sentences.length===1)return{summary:sentences[0],info:"1 предложение"};
+function summarizeLocal(text,ratio){const sentences=splitSentences(text);if(!sentences.length)return{summary:"",info:"Пустой текст"};if(sentences.length===1)return{summary:sentences[0],info:"1 предложение · локально"};
 const freq=Object.create(null);sentences.forEach(sent=>sent.split(/\s+/).forEach(w=>{const t=tok(w);if(!t||t.length<2||STOP.has(t))return;freq[t]=(freq[t]||0)+1;}));
 const scored=sentences.map((sent,index)=>{let score=0,words=0;sent.split(/\s+/).forEach(w=>{const t=tok(w);if(!t||STOP.has(t))return;words++;score+=freq[t]||0;});const boost=1+Math.max(0,.15-index*.02);return{sent,index,score:(words?score/words:0)*boost};});
 let keep=Math.max(1,Math.round(sentences.length*ratio));keep=Math.min(keep,sentences.length);
 const picked=scored.slice().sort((a,b)=>b.score-a.score).slice(0,keep).sort((a,b)=>a.index-b.index);
 const summary=picked.map(p=>p.sent).join(" ");const ow=text.trim().split(/\s+/).length,sw=summary.trim().split(/\s+/).filter(Boolean).length;
-return{summary,info:ow+" → "+sw+" слов · "+sentences.length+" → "+keep+" предл."};}
+return{summary,info:ow+" → "+sw+" слов · "+sentences.length+" → "+keep+" предл. · локально"};}
+function showResult(summary,info){summaryEl.textContent=summary;metaEl.textContent=info;resultEl.classList.add("show");}
 if(!SR){btnVoice.disabled=true;voiceHint.textContent="Web Speech API недоступен. Вставьте текст или откройте в Chrome / Edge.";}
 else{rec=new SR();rec.lang="ru-RU";rec.continuous=true;rec.interimResults=true;
 rec.onstart=()=>{listening=true;btnVoice.textContent="⏹ Стоп";btnVoice.classList.add("on");setStatus("Слушаю… говорите","o");};
@@ -68,7 +69,28 @@ rec.onend=()=>{listening=false;btnVoice.textContent="🎤 Диктовать";bt
 rec.onresult=ev=>{let chunk="";for(let i=ev.resultIndex;i<ev.results.length;i++)if(ev.results[i].isFinal)chunk+=ev.results[i][0].transcript;if(chunk){const cur=textEl.value;textEl.value=cur+(cur&&!/\s$/.test(cur)?" ":"")+chunk.trim();}};}
 btnVoice.onclick=()=>{if(!rec)return;if(listening){rec.stop();return;}try{rec.start();}catch(e){setStatus("Не удалось запустить микрофон","e");}};
 btnClear.onclick=()=>{textEl.value="";resultEl.classList.remove("show");summaryEl.textContent="";metaEl.textContent="";setStatus("");};
-btnSummarize.onclick=()=>{const text=textEl.value.trim();if(!text){setStatus("Вставьте или надиктуйте текст","e");return;}const out=summarizeLocal(text,parseFloat(ratioEl.value)||.45);summaryEl.textContent=out.summary;metaEl.textContent=out.info;resultEl.classList.add("show");setStatus("Готово — локально в браузере","o");};
+btnSummarize.onclick=async()=>{
+  const text=textEl.value.trim();
+  if(!text){setStatus("Вставьте или надиктуйте текст","e");return;}
+  const ratio=parseFloat(ratioEl.value)||.45;
+  btnSummarize.disabled=true;
+  setStatus("Сокращаю через сервер…");
+  try{
+    const r=await fetch("/api/summarize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,ratio})});
+    if(r.ok){
+      const data=await r.json();
+      if(data&&data.summary){
+        showResult(data.summary,"Groq · "+(data.model||""));
+        setStatus("Готово — через Groq","o");
+        return;
+      }
+    }
+  }catch(e){/* network / CORS → local */}
+  finally{btnSummarize.disabled=false;}
+  const out=summarizeLocal(text,ratio);
+  showResult(out.summary,out.info);
+  setStatus("Сервер недоступен или нет ключа — локальный запасной вариант","o");
+};
 })();
 </script>
 </body>
